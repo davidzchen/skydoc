@@ -22,6 +22,41 @@ from xml.sax.saxutils import escape
 def leading_whitespace(line):
   return len(line) - len(line.lstrip())
 
+def _parse_attribute_docs(attr_docs, line, it):
+  attr_docs = {}  # Dictionary for attribute documentation
+  attr = None  # Current attribute name
+  desc = None  # Description for current attribute
+  args_leading_ws = leading_whitespace(line)
+  for line in it:
+    # If a blank line is encountered, we have finished parsing the "Args"
+    # section.
+    if line.strip() and leading_whitespace(line) == args_leading_ws:
+      break
+    # In practice, users sometimes add a "-" prefix, so we strip it even
+    # though it is not recommended by the style guide
+    match = re.search(r"^\s*-?\s*(\w+):\s*(.*)", line)
+    if match:  # We have found a new attribute
+      if var:
+        attr_docs[var] = escape(desc)
+      var, desc = match.group(1), match.group(2)
+    elif var:
+      # Merge documentation when it is multiline
+      desc = desc + "\n" + line.strip()
+
+  if attr:
+    attr_docs[attr] = escape(desc)
+  return attr_docs
+
+def _parse_example_docs(examples, line, it):
+  pass
+
+def _parse_implicit_output_docs(implicit_outputs, line, it)
+  pass
+
+ARGS_HEADING = "Args:"
+EXAMPLES_HEADING = "Examples:"
+IMPLICIT_OUTPUTS_HEADING = "Implicit Outputs:"
+
 def parse_attribute_doc(doc):
   """Analyzes the documentation string for attributes.
 
@@ -35,33 +70,24 @@ def parse_attribute_doc(doc):
     The new documentation string and a dictionary that maps each attribute to
     its documentation
   """
-  doc_attr = {}
+  attr_docs = {}
+  examples = []
+  implicit_outputs = {}
   lines = doc.split("\n")
-  if "Args:" not in lines:
-    return doc, doc_attr
-  start = lines.index("Args:")
+  docs = []
+  it = iter(lines)
+  for line in it:
+    if line.strip() == ARGS_HEADING:
+      _parse_attribute_docs(attr_docs, line, it)
+      continue
+    elif line.strip() == EXAMPLES_HEADING:
+      _parse_example_docs(examples, line, it)
+      continue
+    elif line.strip() == IMPLICIT_OUTPUTS_HEADING:
+      _parse_implicit_output_docs(implicit_outputs, line, it)
+      continue
 
-  i = start + 1
-  var = None  # Current attribute name
-  desc = None  # Description for current attribute
-  args_leading_ws = leading_whitespace(lines[start])
-  for i in xrange(start + 1, len(lines)):
-    # If a blank line is encountered, we have finished parsing the "Args"
-    # section.
-    if lines[i].strip() and leading_whitespace(lines[i]) == args_leading_ws:
-      break
-    # In practice, users sometimes add a "-" prefix, so we strip it even
-    # though it is not recommended by the style guide
-    match = re.search(r"^\s*-?\s*(\w+):\s*(.*)", lines[i])
-    if match:  # We have found a new attribute
-      if var:
-        doc_attr[var] = escape(desc)
-      var, desc = match.group(1), match.group(2)
-    elif var:
-      # Merge documentation when it is multiline
-      desc = desc + "\n" + lines[i].strip()
+    docs.append(line)
 
-  if var:
-    doc_attr[var] = escape(desc)
-  doc = "\n".join(lines[:start - 1])
-  return doc, doc_attr
+  doc = "\n".join(docs)
+  return doc, attr_docs
