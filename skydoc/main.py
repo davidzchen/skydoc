@@ -23,10 +23,10 @@ import sys
 import tempfile
 import zipfile
 
+from skydoc import build_pb2
 from skydoc import macro_extractor
 from skydoc import rule
 from skydoc import rule_extractor
-from src.main.protobuf import build_pb2
 
 gflags.DEFINE_string('output_dir', '',
     'The directory to write the output generated documentation to if '

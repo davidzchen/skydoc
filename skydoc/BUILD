@@ -1,10 +1,19 @@
 package(default_visibility = ["//visibility:public"])
 
+load("@protobuf//:protobuf.bzl", "py_proto_library")
+
+py_proto_library(
+    name = "build_pb_py",
+    srcs = ["build.proto"],
+    default_runtime = "@protobuf//:protobuf_python",
+    protoc = "@protobuf//:protoc",
+)
+
 py_library(
     name = "common",
     srcs = ["common.py"],
     deps = [
-        "@bazel_tools//src/main/protobuf:build_pb_py",
+        ":build_pb_py",
     ],
 )
 
@@ -26,8 +35,8 @@ py_test(
     name = "macro_extractor_test",
     srcs = ["macro_extractor_test.py"],
     deps = [
+        ":build_pb_py",
         ":macro_extractor",
-        "@bazel_tools//src/main/protobuf:build_pb_py",
     ],
 )
 
@@ -44,8 +53,8 @@ py_test(
     name = "rule_extractor_test",
     srcs = ["rule_extractor_test.py"],
     deps = [
+        ":build_pb_py",
         ":rule_extractor",
-        "@bazel_tools//src/main/protobuf:build_pb_py",
     ],
 )
 
@@ -53,8 +62,8 @@ py_library(
     name = "rule",
     srcs = ["rule.py"],
     deps = [
+        ":build_pb_py",
         "//external:mistune",
-        "@bazel_tools//src/main/protobuf:build_pb_py",
     ],
 )
 

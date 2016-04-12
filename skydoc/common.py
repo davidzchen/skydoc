@@ -15,19 +15,21 @@
 """Common functions for skydoc."""
 
 import re
-from src.main.protobuf import build_pb2
+import textwrap
+from skydoc import build_pb2
 from xml.sax.saxutils import escape
 
 
 def leading_whitespace(line):
   return len(line) - len(line.lstrip())
 
-def _parse_attribute_docs(attr_docs, line, it):
-  attr_docs = {}  # Dictionary for attribute documentation
+def _parse_attribute_docs(attr_doc, lines, index):
   attr = None  # Current attribute name
   desc = None  # Description for current attribute
-  args_leading_ws = leading_whitespace(line)
-  for line in it:
+  args_leading_ws = leading_whitespace(lines[index])
+  i = index + 1
+  while i < len(lines):
+    line = lines[i]
     # If a blank line is encountered, we have finished parsing the "Args"
     # section.
     if line.strip() and leading_whitespace(line) == args_leading_ws:
@@ -36,28 +38,40 @@ def _parse_attribute_docs(attr_docs, line, it):
     # though it is not recommended by the style guide
     match = re.search(r"^\s*-?\s*(\w+):\s*(.*)", line)
     if match:  # We have found a new attribute
-      if var:
-        attr_docs[var] = escape(desc)
-      var, desc = match.group(1), match.group(2)
-    elif var:
+      if attr:
+        attr_doc[attr] = escape(desc)
+      attr, desc = match.group(1), match.group(2)
+    elif attr:
       # Merge documentation when it is multiline
       desc = desc + "\n" + line.strip()
+    i = i + 1
 
   if attr:
-    attr_docs[attr] = escape(desc)
-  return attr_docs
+    attr_doc[attr] = escape(desc).strip()
 
-def _parse_example_docs(examples, line, it):
-  pass
+  return i
 
-def _parse_implicit_output_docs(implicit_outputs, line, it)
-  pass
+def _parse_example_docs(examples, lines, index):
+  heading_leading_ws = leading_whitespace(lines[index])
+  i = index + 1
+  while i < len(lines):
+    line = lines[i]
+    if line.strip() and leading_whitespace(line) == heading_leading_ws:
+      break
+    examples.append(line)
+    i = i + 1
+
+  return i
+
+def _parse_implicit_output_docs(implicit_outputs, lines, index):
+  return index
 
 ARGS_HEADING = "Args:"
 EXAMPLES_HEADING = "Examples:"
+EXAMPLE_HEADING = "Example:"
 IMPLICIT_OUTPUTS_HEADING = "Implicit Outputs:"
 
-def parse_attribute_doc(doc):
+def parse_docstring(doc):
   """Analyzes the documentation string for attributes.
 
   This looks for the "Args:" separator to fetch documentation for each
@@ -70,24 +84,27 @@ def parse_attribute_doc(doc):
     The new documentation string and a dictionary that maps each attribute to
     its documentation
   """
-  attr_docs = {}
+  attr_doc = {}
   examples = []
   implicit_outputs = {}
   lines = doc.split("\n")
   docs = []
-  it = iter(lines)
-  for line in it:
+  i = 0
+  while i < len(lines):
+    line = lines[i]
     if line.strip() == ARGS_HEADING:
-      _parse_attribute_docs(attr_docs, line, it)
+      i = _parse_attribute_docs(attr_doc, lines, i)
       continue
-    elif line.strip() == EXAMPLES_HEADING:
-      _parse_example_docs(examples, line, it)
+    elif line.strip() == EXAMPLES_HEADING or line.strip() == EXAMPLE_HEADING:
+      i = _parse_example_docs(examples, lines, i)
       continue
     elif line.strip() == IMPLICIT_OUTPUTS_HEADING:
-      _parse_implicit_output_docs(implicit_outputs, line, it)
+      i = _parse_implicit_output_docs(implicit_outputs, lines, i)
       continue
 
     docs.append(line)
+    i = i + 1
 
-  doc = "\n".join(docs)
-  return doc, attr_docs
+  doc = "\n".join(docs).strip()
+  examples_doc = textwrap.dedent("\n".join(examples)).strip()
+  return doc, attr_doc, examples_doc
