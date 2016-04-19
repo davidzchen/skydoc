@@ -43,8 +43,7 @@ class Label(object):
 class RuleDescriptor(object):
   def __init__(self, implementation, test=False, attrs={}, outputs=None,
                executable=False, output_to_genfiles=False, fragments=[],
-               host_fragments=[], local=False, doc='', example_doc='',
-               type='rule'):
+               host_fragments=[], local=False, doc='', type='rule'):
     """Constructor for RuleDescriptor
 
     Args:
@@ -80,7 +79,8 @@ class RuleDescriptor(object):
     self.host_fragments = host_fragments
     self.local = local
     self.doc = doc
-    self.example_doc = example_doc
+    self.example_doc = ''
+    self.implicit_output_targets = {}
     self.type = type
     for name, attr in self.attrs.iteritems():
       attr.name = name

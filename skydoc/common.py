@@ -22,6 +22,17 @@ from xml.sax.saxutils import escape
 ARGS_HEADING = "Args:"
 EXAMPLES_HEADING = "Examples:"
 EXAMPLE_HEADING = "Example:"
+IMPLICIT_OUTPUT_TARGETS_HEADING = "Implicit Output Targets:"
+
+
+class ExtractedDocs(object):
+  """Simple class to contain the documentation extracted from a docstring."""
+
+  def __init__(self, doc, attr_doc, example_doc, implicit_target_doc):
+    self.doc = doc
+    self.attr_doc = attr_doc
+    self.example_doc = example_doc
+    self.implicit_target_doc = implicit_target_doc
 
 
 def leading_whitespace(line):
@@ -30,17 +41,19 @@ def leading_whitespace(line):
 
 
 def _parse_attribute_docs(attr_doc, lines, index):
-  """Extracts attribute documentation.
+  """Extracts documentation in the form of `name: description`.
+
+  This includes documentation for attributes and implicit output targets.
 
   Args:
-    attr_doc: A dict used to store the extracted attribute documentation.
+    doc_map: A dict used to store the extracted documentation.
     lines: List containing the input docstring split into lines.
-    index: The index in lines containing "Args:", which begins the argument
-        documentation.
+    index: The index in lines containing the heading that begins the
+        documentation, such as "Args:" or "Implicit Output Targets:".
 
   Returns:
-    Returns the next index after the attribute documentation to resume
-    processing documentation in the caller.
+    Returns the next index after the documentation to resume processing
+    documentation in the caller.
   """
   attr = None  # Current attribute name
   desc = None  # Description for current attribute
@@ -109,6 +122,7 @@ def parse_docstring(doc):
     its documentation
   """
   attr_doc = {}
+  implicit_target_doc = {}
   examples = []
   lines = doc.split("\n")
   docs = []
@@ -121,10 +135,13 @@ def parse_docstring(doc):
     elif line.strip() == EXAMPLES_HEADING or line.strip() == EXAMPLE_HEADING:
       i = _parse_example_docs(examples, lines, i)
       continue
+    elif line.strip() == IMPLICIT_OUTPUT_TARGETS_HEADING:
+      i = _parse_attribute_docs(implicit_target_doc, lines, i)
+      continue
 
     docs.append(line)
     i += 1
 
   doc = "\n".join(docs).strip()
   examples_doc = textwrap.dedent("\n".join(examples)).strip()
-  return doc, attr_doc, examples_doc
+  return ExtractedDocs(doc, attr_doc, examples_doc, implicit_target_doc)

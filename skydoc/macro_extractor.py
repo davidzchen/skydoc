@@ -72,20 +72,20 @@ class MacroDocExtractor(object):
 
     doc = ast.get_docstring(stmt)
     if doc:
-      doc, attr_doc, example_doc = common.parse_docstring(doc)
-      rule.documentation = doc
-      rule.example_documentation = example_doc
+      extracted_docs = common.parse_docstring(doc)
+      rule.documentation = extracted_docs.doc
+      rule.example_documentation = extracted_docs.example_doc
     else:
-      doc = ""
-      attr_doc = {}
+      extracted_docs = common.ExtractedDocs(
+          doc="", attr_doc={}, example_doc="", implicit_target_doc={})
 
     for i in range(len(stmt.args.args)):
       attr = rule.attribute.add()
       attr_name = stmt.args.args[i].id
       attr.name = attr_name
 
-      if attr_name in attr_doc:
-        attr.documentation = attr_doc[attr_name]
+      if attr_name in extracted_docs.attr_doc:
+        attr.documentation = extracted_docs.attr_doc[attr_name]
 
       if i < shift:  # The first arguments are mandatory
         attr.mandatory = True
@@ -93,6 +93,11 @@ class MacroDocExtractor(object):
       else:
         attr.mandatory = False
         attr.type = get_type(stmt.args.defaults[i - shift])
+
+    for target_name, desc = extracted_docs.implicit_target_doc.iteritems():
+      target = rule.implicit_output_target.add()
+      target.name = target_name
+      target.documentation = desc
 
   def parse_bzl(self, bzl_file):
     """Extracts documentation for all public macros from the given .bzl file.

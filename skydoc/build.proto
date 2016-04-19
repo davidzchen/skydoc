@@ -58,9 +58,14 @@ message AllowedRuleClassInfo {
   repeated string allowed_rule_class = 2;
 }
 
+// Information about an implicit output target for a rule.
+message ImplicitOutputTarget {
+  optional string name;
+  optional string documentation;
+}
+
 // This message represents a single attribute of a single rule.
 message AttributeDefinition {
-
   // Rule name, e.g. "cc_library"
   required string name = 1;
   required Attribute.Discriminator type = 2;
@@ -81,6 +86,7 @@ message RuleDefinition {
 
   optional string example_documentation = 4;
 
+  repeated ImplicitOutputTarget implicit_output_target = 5;
 }
 
 message BuildLanguage {

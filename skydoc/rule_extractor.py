@@ -77,14 +77,15 @@ class RuleDocExtractor(object):
       name: The name of the rule.
       doc: The docstring extracted for the rule.
     """
-    doc, attr_doc, example_doc = common.parse_docstring(doc)
+    extracted_docs = common.parse_docstring(doc)
     if name in self.__extracted_rules:
       rule = self.__extracted_rules[name]
-      rule.doc = doc
-      rule.example_doc = example_doc
-      for attr_name, attr_doc in attr_doc.iteritems():
-        if attr_name in rule.attrs:
-          rule.attrs[attr_name].doc = attr_doc
+      rule.doc = extracted_docs.doc
+      rule.example_doc = extracted_docs.example_doc
+      rule.implicit_output_targets = extracted_docs.implicit_target_doc
+      for attr, desc in extracted_docs.attr_doc.iteritems():
+        if attr in rule.attrs:
+          rule.attrs[attr].doc = desc
 
   def _extract_docstrings(self, bzl_file):
     """Extracts the docstrings for all public rules in the .bzl file.
@@ -144,6 +145,11 @@ class RuleDocExtractor(object):
         # TODO(dzc): Save the default value of the attribute. This will require
         # adding a proto field to the AttributeDefinition proto, perhaps as a
         # oneof.
+
+      for target_name, desc = rule_desc.implicit_output_targets:
+        target = rule.implicit_output_target.add()
+        target.name = target_name
+        target.documentation = desc
 
   def parse_bzl(self, bzl_file):
     """Extracts the documentation for all public rules from the given .bzl file.

@@ -389,5 +389,119 @@ class RuleExtractorTest(unittest.TestCase):
 
     self.check_protos(src, expected)
 
+  def test_rule_with_example(self):
+    src = textwrap.dedent("""\
+        def _impl(ctx):
+          return struct()
+
+        rule_with_example = rule(
+            implementation = _impl,
+            attrs = {
+                "arg_label": attr.label(),
+                "arg_string": attr.string(),
+            },
+        )
+        \"\"\"Rule with example.
+
+        Example:
+          Here is an example of how to use this rule.
+
+        Args:
+          name: A unique name for this rule.
+          arg_label: A label argument.
+          arg_string: A string argument.
+        \"\"\"
+        """)
+
+    expected = textwrap.dedent("""\
+        rule {
+          name: "rule_with_example"
+          documentation: "Rule with example."
+          example_documentation: "Here is an example of how to use this rule."
+          attribute {
+            name: "name"
+            type: UNKNOWN
+            mandatory: true
+            documentation: "A unique name for this rule."
+          }
+          attribute {
+            name: "arg_label"
+            type: LABEL
+            mandatory: false
+            documentation: "A label argument."
+          }
+          attribute {
+            name: "arg_string"
+            type: STRING
+            mandatory: false
+            documentation: "A string argument."
+          }
+        }
+        """)
+
+    self.check_protos(src, expected)
+
+  def test_rule_with_implicit_output(self):
+    src = textwrap.dedent("""\
+        def _impl(ctx):
+          return struct()
+
+        rule_with_implicit_output = rule(
+            implementation = _impl,
+            attrs = {
+                "arg_label": attr.label(),
+                "arg_string": attr.string(),
+            },
+        )
+        \"\"\"Rule with implicit output targets.
+
+        Implicit Output Targets:
+          `foo`.jar: A Java archive.
+          `foo`_deploy.jar: A Java archive suitable for deployment.
+
+              Only built if explicitly requested.
+
+        Args:
+          name: A unique name for this rule.
+          arg_label: A label argument.
+          arg_string: A string argument.
+        \"\"\"
+        """)
+
+    expected = textwrap.dedent("""\
+        rule {
+          name: "rule_with_implicit_output"
+          documentation: "Rule with implicit output targets."
+          attribute {
+            name: "name"
+            type: UNKNOWN
+            mandatory: true
+            documentation: "A unique name for this rule."
+          }
+          attribute {
+            name: "arg_label"
+            type: LABEL
+            mandatory: false
+            documentation: "A label argument."
+          }
+          attribute {
+            name: "arg_string"
+            type: STRING
+            mandatory: false
+            documentation: "A string argument."
+          }
+          implicit_output_target {
+            name: "`foo`.jar"
+            documentation: "A Java archive."
+          }
+          implicit_output_target {
+            name: "`foo`_deploy.jar"
+            documentation: "A Java archive suitable for deployment.\\n\\nOnly built if explicitly requested."
+          }
+        }
+        """)
+
+    self.check_protos(src, expected)
+
 if __name__ == '__main__':
   unittest.main()
