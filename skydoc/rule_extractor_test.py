@@ -385,7 +385,7 @@ class RuleExtractorTest(unittest.TestCase):
 
     self.check_protos(src, expected)
 
-  def test_rule_with_example(self):
+  def test_rule_with_example_doc(self):
     src = textwrap.dedent("""\
         def _impl(ctx):
           return struct()
@@ -437,23 +437,27 @@ class RuleExtractorTest(unittest.TestCase):
 
     self.check_protos(src, expected)
 
-  def test_rule_with_implicit_output(self):
+  def test_rule_with_output_doc(self):
     src = textwrap.dedent("""\
         def _impl(ctx):
           return struct()
 
-        rule_with_implicit_output = rule(
+        rule_with_outputs = rule(
             implementation = _impl,
             attrs = {
                 "arg_label": attr.label(),
                 "arg_string": attr.string(),
             },
+            outputs = {
+                "jar": "%{name}.jar",
+                "deploy_jar": "%{name}_deploy.jar",
+            },
         )
-        \"\"\"Rule with implicit output targets.
+        \"\"\"Rule with output documentation.
 
-        Implicit Output Targets:
-          **foo**.jar: A Java archive.
-          **foo**_deploy.jar: A Java archive suitable for deployment.
+        Outputs:
+          jar: A Java archive.
+          deploy_jar: A Java archive suitable for deployment.
 
               Only built if explicitly requested.
 
@@ -466,8 +470,8 @@ class RuleExtractorTest(unittest.TestCase):
 
     expected = textwrap.dedent("""\
         rule {
-          name: "rule_with_implicit_output"
-          documentation: "Rule with implicit output targets."
+          name: "rule_with_outputs"
+          documentation: "Rule with output documentation.
           attribute {
             name: "name"
             type: UNKNOWN
@@ -486,12 +490,12 @@ class RuleExtractorTest(unittest.TestCase):
             mandatory: false
             documentation: "A string argument."
           }
-          implicit_output_target {
-            name: "**foo**.jar"
+          output {
+            template: "`%{name}.jar`"
             documentation: "A Java archive."
           }
-          implicit_output_target {
-            name: "**foo**_deploy.jar"
+          output {
+            template: "`%{name}_deploy.jar`"
             documentation: "A Java archive suitable for deployment.\\n\\nOnly built if explicitly requested."
           }
         }

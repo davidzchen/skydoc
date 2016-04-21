@@ -58,9 +58,11 @@ message AllowedRuleClassInfo {
   repeated string allowed_rule_class = 2;
 }
 
-// Information about an implicit output target for a rule.
-message ImplicitOutputTarget {
-  optional string name = 1;
+// Information about an output target for a rule.
+message OutputTarget {
+  // The template name of the output target (e.g. %{name}.jar.
+  optional string template = 1;
+  // The documentation for the output target.
   optional string documentation = 2;
 }
 
@@ -86,7 +88,7 @@ message RuleDefinition {
 
   optional string example_documentation = 4;
 
-  repeated ImplicitOutputTarget implicit_output_target = 5;
+  repeated OutputTarget output = 5;
 }
 
 message BuildLanguage {

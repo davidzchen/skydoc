@@ -24,9 +24,9 @@ class CommonTest(unittest.TestCase):
     docstring = 'Rule documentation only docstring.'
     extracted_docs = common.parse_docstring(docstring)
     self.assertEqual('Rule documentation only docstring.', extracted_docs.doc)
-    self.assertDictEqual({}, extracted_docs.attr_doc)
+    self.assertDictEqual({}, extracted_docs.attr_docs)
     self.assertEqual('', extracted_docs.example_doc)
-    self.assertDictEqual({}, extracted_docs.implicit_target_doc)
+    self.assertDictEqual({}, extracted_docs.output_docs)
 
   def test_rule_and_attribute_doc(self):
     docstring = (
@@ -42,9 +42,9 @@ class CommonTest(unittest.TestCase):
 
     extracted_docs = common.parse_docstring(docstring)
     self.assertEqual('Rule and attribute documentation.', extracted_docs.doc)
-    self.assertDictEqual(expected_attrs, extracted_docs.attr_doc)
+    self.assertDictEqual(expected_attrs, extracted_docs.attr_docs)
     self.assertEqual('', extracted_docs.example_doc)
-    self.assertDictEqual({}, extracted_docs.implicit_target_doc)
+    self.assertDictEqual({}, extracted_docs.output_docs)
 
   def test_multi_line_doc(self):
     docstring = (
@@ -72,9 +72,9 @@ class CommonTest(unittest.TestCase):
 
     extracted_docs = common.parse_docstring(docstring)
     self.assertEqual(expected_doc, extracted_docs.doc)
-    self.assertDictEqual(expected_attrs, extracted_docs.attr_doc)
+    self.assertDictEqual(expected_attrs, extracted_docs.attr_docs)
     self.assertEqual('', extracted_docs.example_doc)
-    self.assertDictEqual({}, extracted_docs.implicit_target_doc)
+    self.assertDictEqual({}, extracted_docs.output_docs)
 
   def test_invalid_args(self):
     docstring = (
@@ -86,9 +86,9 @@ class CommonTest(unittest.TestCase):
 
     extracted_docs = common.parse_docstring(docstring)
     self.assertEqual(docstring.strip(), extracted_docs.doc)
-    self.assertDictEqual({}, extracted_docs.attr_doc)
+    self.assertDictEqual({}, extracted_docs.attr_docs)
     self.assertEqual('', extracted_docs.example_doc)
-    self.assertDictEqual({}, extracted_docs.implicit_target_doc)
+    self.assertDictEqual({}, extracted_docs.output_docs)
 
   def test_example(self):
     docstring = (
@@ -117,9 +117,9 @@ class CommonTest(unittest.TestCase):
 
     extracted_docs = common.parse_docstring(docstring)
     self.assertEqual('Documentation with example', extracted_docs.doc)
-    self.assertDictEqual(expected_attrs, extracted_docs.attr_doc)
+    self.assertDictEqual(expected_attrs, extracted_docs.attr_docs)
     self.assertEqual(expected_example_doc, extracted_docs.example_doc)
-    self.assertDictEqual({}, extracted_docs.implicit_target_doc)
+    self.assertDictEqual({}, extracted_docs.output_docs)
 
   def test_example_after_attrs(self):
     docstring = (
@@ -148,40 +148,38 @@ class CommonTest(unittest.TestCase):
 
     extracted_docs = common.parse_docstring(docstring)
     self.assertEqual('Documentation with example', extracted_docs.doc)
-    self.assertDictEqual(expected_attrs, extracted_docs.attr_doc)
+    self.assertDictEqual(expected_attrs, extracted_docs.attr_docs)
     self.assertEqual(expected_example_doc, extracted_docs.example_doc)
-    self.assertDictEqual({}, extracted_docs.implicit_target_doc)
+    self.assertDictEqual({}, extracted_docs.output_docs)
 
-  def test_implicit_output_targets(self):
+  def test_outputs(self):
     docstring = (
-        'Documentation with implicit output targets\n'
+        'Documentation with outputs\n'
         '\n'
         'Args:\n'
         '  name: A unique name for this rule.\n'
         '  visibility: The visibility of this rule.\n'
         '\n'
-        'Implicit Output Targets:\n'
-        '  **name**.jar: A Java archive.\n'
-        '  **name**_deploy.jar: A Java archive suitable for deployment.\n'
+        'Outputs:\n'
+        '  `%{name}.jar`: A Java archive.\n'
+        '  `%{name}_deploy.jar`: A Java archive suitable for deployment.\n'
         '\n'
         '      Only built if explicitly requested.\n')
     expected_attrs = {
         'name': 'A unique name for this rule.',
         'visibility': 'The visibility of this rule.'
     }
-    expected_implicit_targets = {
-        '**name**.jar': 'A Java archive.',
-        '**name**_deploy.jar': ('A Java archive suitable for deployment.\n\n'
-                                'Only built if explicitly requested.'),
+    expected_outputs = {
+        '`%{name}.jar`': 'A Java archive.',
+        '`%{name}_deploy.jar`': ('A Java archive suitable for deployment.\n\n'
+                                 'Only built if explicitly requested.'),
     }
 
     extracted_docs = common.parse_docstring(docstring)
-    self.assertEqual('Documentation with implicit output targets',
-                     extracted_docs.doc)
-    self.assertDictEqual(expected_attrs, extracted_docs.attr_doc)
+    self.assertEqual('Documentation with outputs', extracted_docs.doc)
+    self.assertDictEqual(expected_attrs, extracted_docs.attr_docs)
     self.assertEqual('', extracted_docs.example_doc)
-    self.assertDictEqual(expected_implicit_targets,
-                         extracted_docs.implicit_target_doc)
+    self.assertDictEqual(expected_outputs, extracted_docs.output_docs)
 
 
 if __name__ == '__main__':

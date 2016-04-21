@@ -82,10 +82,19 @@ class RuleDocExtractor(object):
       rule = self.__extracted_rules[name]
       rule.doc = extracted_docs.doc
       rule.example_doc = extracted_docs.example_doc
-      rule.implicit_output_targets = extracted_docs.implicit_target_doc
-      for attr, desc in extracted_docs.attr_doc.iteritems():
-        if attr in rule.attrs:
-          rule.attrs[attr].doc = desc
+      rule.outputs = extracted_docs.output_docs
+      for attr_name, desc in extracted_docs.attr_docs.iteritems():
+        if attr_name in rule.attrs:
+          rule.attrs[attr_name].doc = desc
+
+      # Match the output name from the docstring with the corresponding output
+      # template name extracted from rule() and store a mapping of output
+      # template name to documentation.
+      for output_name, desc in extracted_docs.output_docs.iteritems():
+        if output_name in rule.outputs:
+          output_template = rule.outputs[output_name]
+          rule.output_docs[output_template] = desc
+
 
   def _extract_docstrings(self, bzl_file):
     """Extracts the docstrings for all public rules in the .bzl file.
@@ -149,10 +158,10 @@ class RuleDocExtractor(object):
         # adding a proto field to the AttributeDefinition proto, perhaps as a
         # oneof.
 
-      for target_name, desc in rule_desc.implicit_output_targets.iteritems():
-        target = rule.implicit_output_target.add()
-        target.name = target_name
-        target.documentation = desc
+      for template, doc in rule_desc.output_docs.iteritems():
+        output = rule.output.add()
+        output.template = output.template
+        target.documentation = doc
 
   def parse_bzl(self, bzl_file):
     """Extracts the documentation for all public rules from the given .bzl file.

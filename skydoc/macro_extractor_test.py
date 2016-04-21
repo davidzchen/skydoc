@@ -232,7 +232,7 @@ class MacroExtractorTest(unittest.TestCase):
 
     self.check_protos(src, expected)
 
-  def test_macro_doc_with_example(self):
+  def test_macro_with_example_doc(self):
     src = textwrap.dedent("""\
         def macro_with_example(name, foo, visibility=None):
           \"\"\"Macro with examples.
@@ -281,14 +281,14 @@ class MacroExtractorTest(unittest.TestCase):
 
     self.check_protos(src, expected)
 
-  def test_macro_doc_with_implicit_output(self):
+  def test_macro_with_output_doc(self):
     src = textwrap.dedent("""\
-        def macro_with_implicit_output(name, foo, visibility=None):
-          \"\"\"Macro with implicit output targets.
+        def macro_with_outputs(name, foo, visibility=None):
+          \"\"\"Macro with output documentation.
 
-          Implicit Output Targets:
-            **foo**.jar: A Java archive.
-            **foo**_deploy.jar: A Java archive suitable for deployment.
+          Outputs:
+            `%{name}.jar`: A Java archive.
+            `%{name}_deploy.jar`: A Java archive suitable for deployment.
 
                 Only built if explicitly requested.
 
@@ -307,8 +307,8 @@ class MacroExtractorTest(unittest.TestCase):
 
     expected = textwrap.dedent("""\
         rule {
-          name: "macro_with_implicit_output"
-          documentation: "Macro with implicit output targets."
+          name: "macro_with_outputs"
+          documentation: "Macro with output documentation."
           attribute {
             name: "name"
             type: UNKNOWN
@@ -327,19 +327,18 @@ class MacroExtractorTest(unittest.TestCase):
             mandatory: false
             documentation: "The visibility of this rule."
           }
-          implicit_output_target {
-            name: "**foo**.jar"
+          output {
+            template: "`%{name}.jar`"
             documentation: "A Java archive."
           }
-          implicit_output_target {
-            name: "**foo**_deploy.jar"
+          output {
+            template: "`%{name}_deploy.jar`"
             documentation: "A Java archive suitable for deployment.\\n\\nOnly built if explicitly requested."
           }
         }
         """)
 
     self.check_protos(src, expected)
-
 
   def test_file_doc_title_only(self):
     src = textwrap.dedent("""\

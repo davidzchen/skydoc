@@ -22,17 +22,17 @@ from xml.sax.saxutils import escape
 ARGS_HEADING = "Args:"
 EXAMPLES_HEADING = "Examples:"
 EXAMPLE_HEADING = "Example:"
-IMPLICIT_OUTPUT_TARGETS_HEADING = "Implicit Output Targets:"
+OUTPUTS_HEADING = "Outputs:"
 
 
 class ExtractedDocs(object):
   """Simple class to contain the documentation extracted from a docstring."""
 
-  def __init__(self, doc, attr_doc, example_doc, implicit_target_doc):
+  def __init__(self, doc, attr_docs, example_doc, output_docs):
     self.doc = doc
-    self.attr_doc = attr_doc
+    self.attr_docs = attr_docs
     self.example_doc = example_doc
-    self.implicit_target_doc = implicit_target_doc
+    self.output_docs = output_docs
 
 
 def leading_whitespace(line):
@@ -40,16 +40,16 @@ def leading_whitespace(line):
   return len(line) - len(line.lstrip())
 
 
-def _parse_attribute_docs(attr_doc, lines, index):
-  """Extracts documentation in the form of `name: description`.
+def _parse_attribute_docs(attr_docs, lines, index):
+  """Extracts documentation in the form of name: description.
 
-  This includes documentation for attributes and implicit output targets.
+  This includes documentation for attributes and outputs.
 
   Args:
-    doc_map: A dict used to store the extracted documentation.
+    attr_docs: A dict used to store the extracted documentation.
     lines: List containing the input docstring split into lines.
     index: The index in lines containing the heading that begins the
-        documentation, such as "Args:" or "Implicit Output Targets:".
+        documentation, such as "Args:" or "Outputs:".
 
   Returns:
     Returns the next index after the documentation to resume processing
@@ -67,10 +67,10 @@ def _parse_attribute_docs(attr_doc, lines, index):
       break
     # In practice, users sometimes add a "-" prefix, so we strip it even
     # though it is not recommended by the style guide
-    match = re.search(r"^\s*-?\s*([`\*\.\w]+):\s*(.*)", line)
+    match = re.search(r"^\s*-?\s*([`\{\}\%\.\w]+):\s*(.*)", line)
     if match:  # We have found a new attribute
       if attr:
-        attr_doc[attr] = escape(desc)
+        attr_docs[attr] = escape(desc)
       attr, desc = match.group(1), match.group(2)
     elif attr:
       # Merge documentation when it is multiline
@@ -78,7 +78,7 @@ def _parse_attribute_docs(attr_doc, lines, index):
     i += + 1
 
   if attr:
-    attr_doc[attr] = escape(desc).strip()
+    attr_docs[attr] = escape(desc).strip()
 
   return i
 
@@ -121,8 +121,8 @@ def parse_docstring(doc):
     The new documentation string and a dictionary that maps each attribute to
     its documentation
   """
-  attr_doc = {}
-  implicit_target_doc = {}
+  attr_docs = {}
+  output_docs = {}
   examples = []
   lines = doc.split("\n")
   docs = []
@@ -130,13 +130,13 @@ def parse_docstring(doc):
   while i < len(lines):
     line = lines[i]
     if line.strip() == ARGS_HEADING:
-      i = _parse_attribute_docs(attr_doc, lines, i)
+      i = _parse_attribute_docs(attr_docs, lines, i)
       continue
     elif line.strip() == EXAMPLES_HEADING or line.strip() == EXAMPLE_HEADING:
       i = _parse_example_docs(examples, lines, i)
       continue
-    elif line.strip() == IMPLICIT_OUTPUT_TARGETS_HEADING:
-      i = _parse_attribute_docs(implicit_target_doc, lines, i)
+    elif line.strip() == OUTPUTS_HEADING:
+      i = _parse_attribute_docs(output_docs, lines, i)
       continue
 
     docs.append(line)
@@ -144,4 +144,4 @@ def parse_docstring(doc):
 
   doc = "\n".join(docs).strip()
   examples_doc = textwrap.dedent("\n".join(examples)).strip()
-  return ExtractedDocs(doc, attr_doc, examples_doc, implicit_target_doc)
+  return ExtractedDocs(doc, attr_docs, examples_doc, output_docs)

@@ -43,7 +43,7 @@ class Label(object):
 class RuleDescriptor(object):
   def __init__(self, implementation, test=False, attrs={}, outputs=None,
                executable=False, output_to_genfiles=False, fragments=[],
-               host_fragments=[], local=False, doc='', type='rule'):
+               host_fragments=[], local=False, outputs={}, doc='', type='rule'):
     """Constructor for RuleDescriptor
 
     Args:
@@ -61,6 +61,9 @@ class RuleDescriptor(object):
           requires in the host configuration (not used).
       local: Indicates that the rule fetches everything from the local system.
           (Only used if type='repository').
+      outputs: Outputs for this rule as a mapping from string to template name.
+          The dictionary keys are used to refer to the output in the docstring
+          documentation.
       doc: Documentation for this rule. This parameter is used internally by
           skydoc and is not set by any Skylark code in .bzl files.
       example_doc: Example documentation for this rule. This parameter is used
@@ -80,7 +83,8 @@ class RuleDescriptor(object):
     self.local = local
     self.doc = doc
     self.example_doc = ''
-    self.implicit_output_targets = {}
+    self.outputs = outputs
+    self.output_docs = {}
     self.type = type
     for name, attr in self.attrs.iteritems():
       attr.name = name

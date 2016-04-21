@@ -84,12 +84,12 @@ class Attribute(object):
     return type_str
 
 
-class ImplicitOutputTarget(object):
-  """Representation of an implicit output target used to for doc templates."""
+class Output(object):
+  """Representation of an output used to render documentation templates."""
 
   def __init__(self, proto):
     self.__proto = proto
-    self.name = mistune.markdown(proto.name)
+    self.template = mistune.markdown(proto.template)
     self.documentation = mistune.markdown(proto.documentation)
 
 class Rule(object):
@@ -104,9 +104,9 @@ class Rule(object):
     self.attributes = []
     for attribute in proto.attribute:
       self.attributes.append(Attribute(attribute))
-    self.implicit_output_targets = []
-    for target in proto.implicit_output_target:
-      self.implicit_output_targets.append(ImplicitOutputTarget(target))
+    self.outputs = []
+    for target in proto.outputs:
+      self.outputs.append(Output(target))
 
   def _get_signature(self, proto):
     """Returns the rule signature for this rule."""

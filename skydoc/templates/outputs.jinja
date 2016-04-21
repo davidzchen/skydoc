@@ -19,11 +19,11 @@ limitations under the License.
     <col class="col-description" />
   </colgroup>
   <tbody>
-% for target in rule.implicit_output_targets:
+% for output in rule.outputs:
     <tr>
-      <td><code>{{ target.name }}</code></td>
+      <td>{{ output.template }}</td>
       <td>
-        {{ target.documentation }}
+        {{ output.documentation }}
       </td>
     </tr>
 % endfor
