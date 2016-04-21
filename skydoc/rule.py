@@ -105,7 +105,7 @@ class Rule(object):
     for attribute in proto.attribute:
       self.attributes.append(Attribute(attribute))
     self.implicit_output_targets = []
-    for target in proto.implicit_output_target:O
+    for target in proto.implicit_output_target:
       self.implicit_output_targets.append(ImplicitOutputTarget(target))
 
   def _get_signature(self, proto):
