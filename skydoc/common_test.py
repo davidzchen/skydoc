@@ -161,8 +161,8 @@ class CommonTest(unittest.TestCase):
         '  visibility: The visibility of this rule.\n'
         '\n'
         'Outputs:\n'
-        '  `%{name}.jar`: A Java archive.\n'
-        '  `%{name}_deploy.jar`: A Java archive suitable for deployment.\n'
+        '  %{name}.jar: A Java archive.\n'
+        '  %{name}_deploy.jar: A Java archive suitable for deployment.\n'
         '\n'
         '      Only built if explicitly requested.\n')
     expected_attrs = {
@@ -170,9 +170,9 @@ class CommonTest(unittest.TestCase):
         'visibility': 'The visibility of this rule.'
     }
     expected_outputs = {
-        '`%{name}.jar`': 'A Java archive.',
-        '`%{name}_deploy.jar`': ('A Java archive suitable for deployment.\n\n'
-                                 'Only built if explicitly requested.'),
+        '%{name}.jar': 'A Java archive.',
+        '%{name}_deploy.jar': ('A Java archive suitable for deployment.\n\n'
+                               'Only built if explicitly requested.'),
     }
 
     extracted_docs = common.parse_docstring(docstring)

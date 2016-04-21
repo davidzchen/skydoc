@@ -41,9 +41,9 @@ class Label(object):
     self.label_string = label_string
 
 class RuleDescriptor(object):
-  def __init__(self, implementation, test=False, attrs={}, outputs=None,
+  def __init__(self, implementation, test=False, attrs={}, outputs={},
                executable=False, output_to_genfiles=False, fragments=[],
-               host_fragments=[], local=False, outputs={}, doc='', type='rule'):
+               host_fragments=[], local=False, doc='', type='rule'):
     """Constructor for RuleDescriptor
 
     Args:
@@ -51,7 +51,9 @@ class RuleDescriptor(object):
       implementation: The implementation function for the rule (not used).
       test: Whether this is a test rule
       attrs: Dictionary mapping attribute name to attribute descriptor
-      outputs: List of outputs (not used).
+      outputs: Outputs for this rule as a mapping from string to template name.
+          The dictionary keys are used to refer to the output in the docstring
+          documentation.
       executable: Whether this rule produces an executable.
       output_to_genfiles: Whether the rule generates files in the genfiles
           directory rather than the bin directory (not used).
@@ -61,9 +63,6 @@ class RuleDescriptor(object):
           requires in the host configuration (not used).
       local: Indicates that the rule fetches everything from the local system.
           (Only used if type='repository').
-      outputs: Outputs for this rule as a mapping from string to template name.
-          The dictionary keys are used to refer to the output in the docstring
-          documentation.
       doc: Documentation for this rule. This parameter is used internally by
           skydoc and is not set by any Skylark code in .bzl files.
       example_doc: Example documentation for this rule. This parameter is used

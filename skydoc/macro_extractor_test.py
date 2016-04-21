@@ -287,8 +287,8 @@ class MacroExtractorTest(unittest.TestCase):
           \"\"\"Macro with output documentation.
 
           Outputs:
-            `%{name}.jar`: A Java archive.
-            `%{name}_deploy.jar`: A Java archive suitable for deployment.
+            %{name}.jar: A Java archive.
+            %{name}_deploy.jar: A Java archive suitable for deployment.
 
                 Only built if explicitly requested.
 
@@ -328,12 +328,12 @@ class MacroExtractorTest(unittest.TestCase):
             documentation: "The visibility of this rule."
           }
           output {
-            template: "`%{name}.jar`"
-            documentation: "A Java archive."
+            template: "%{name}_deploy.jar"
+            documentation: "A Java archive suitable for deployment.\\n\\nOnly built if explicitly requested."
           }
           output {
-            template: "`%{name}_deploy.jar`"
-            documentation: "A Java archive suitable for deployment.\\n\\nOnly built if explicitly requested."
+            template: "%{name}.jar"
+            documentation: "A Java archive."
           }
         }
         """)

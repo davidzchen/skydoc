@@ -105,8 +105,8 @@ class Rule(object):
     for attribute in proto.attribute:
       self.attributes.append(Attribute(attribute))
     self.outputs = []
-    for target in proto.outputs:
-      self.outputs.append(Output(target))
+    for output in proto.output:
+      self.outputs.append(Output(output))
 
   def _get_signature(self, proto):
     """Returns the rule signature for this rule."""

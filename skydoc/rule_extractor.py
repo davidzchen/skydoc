@@ -82,7 +82,6 @@ class RuleDocExtractor(object):
       rule = self.__extracted_rules[name]
       rule.doc = extracted_docs.doc
       rule.example_doc = extracted_docs.example_doc
-      rule.outputs = extracted_docs.output_docs
       for attr_name, desc in extracted_docs.attr_docs.iteritems():
         if attr_name in rule.attrs:
           rule.attrs[attr_name].doc = desc
@@ -94,7 +93,6 @@ class RuleDocExtractor(object):
         if output_name in rule.outputs:
           output_template = rule.outputs[output_name]
           rule.output_docs[output_template] = desc
-
 
   def _extract_docstrings(self, bzl_file):
     """Extracts the docstrings for all public rules in the .bzl file.
@@ -160,8 +158,8 @@ class RuleDocExtractor(object):
 
       for template, doc in rule_desc.output_docs.iteritems():
         output = rule.output.add()
-        output.template = output.template
-        target.documentation = doc
+        output.template = template
+        output.documentation = doc
 
   def parse_bzl(self, bzl_file):
     """Extracts the documentation for all public rules from the given .bzl file.

@@ -471,7 +471,7 @@ class RuleExtractorTest(unittest.TestCase):
     expected = textwrap.dedent("""\
         rule {
           name: "rule_with_outputs"
-          documentation: "Rule with output documentation.
+          documentation: "Rule with output documentation."
           attribute {
             name: "name"
             type: UNKNOWN
@@ -491,12 +491,12 @@ class RuleExtractorTest(unittest.TestCase):
             documentation: "A string argument."
           }
           output {
-            template: "`%{name}.jar`"
-            documentation: "A Java archive."
+            template: "%{name}_deploy.jar"
+            documentation: "A Java archive suitable for deployment.\\n\\nOnly built if explicitly requested."
           }
           output {
-            template: "`%{name}_deploy.jar`"
-            documentation: "A Java archive suitable for deployment.\\n\\nOnly built if explicitly requested."
+            template: "%{name}.jar"
+            documentation: "A Java archive."
           }
         }
         """)
