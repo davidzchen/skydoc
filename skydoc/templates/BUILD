@@ -5,6 +5,7 @@ filegroup(
     srcs = [
         "attributes.jinja",
         "html.jinja",
+        "implicit_targets.jinja",
         "markdown.jinja",
         "nav.jinja",
         "overview.jinja",

@@ -182,24 +182,20 @@ class RuleExtractorTest(unittest.TestCase):
     expected = textwrap.dedent("""\
         rule {
           name: "undocumented"
-          documentation: ""
           attribute {
             name: "name"
             type: UNKNOWN
             mandatory: true
-            documentation: ""
           }
           attribute {
             name: "arg_label"
             type: LABEL
             mandatory: false
-            documentation: ""
           }
           attribute {
             name: "arg_string"
             type: STRING
             mandatory: false
-            documentation: ""
           }
         }
         """)
@@ -456,8 +452,8 @@ class RuleExtractorTest(unittest.TestCase):
         \"\"\"Rule with implicit output targets.
 
         Implicit Output Targets:
-          `foo`.jar: A Java archive.
-          `foo`_deploy.jar: A Java archive suitable for deployment.
+          **foo**.jar: A Java archive.
+          **foo**_deploy.jar: A Java archive suitable for deployment.
 
               Only built if explicitly requested.
 
@@ -491,11 +487,11 @@ class RuleExtractorTest(unittest.TestCase):
             documentation: "A string argument."
           }
           implicit_output_target {
-            name: "`foo`.jar"
+            name: "**foo**.jar"
             documentation: "A Java archive."
           }
           implicit_output_target {
-            name: "`foo`_deploy.jar"
+            name: "**foo**_deploy.jar"
             documentation: "A Java archive suitable for deployment.\\n\\nOnly built if explicitly requested."
           }
         }

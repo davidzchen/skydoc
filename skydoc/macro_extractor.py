@@ -74,7 +74,8 @@ class MacroDocExtractor(object):
     if doc:
       extracted_docs = common.parse_docstring(doc)
       rule.documentation = extracted_docs.doc
-      rule.example_documentation = extracted_docs.example_doc
+      if extracted_docs.example_doc:
+        rule.example_documentation = extracted_docs.example_doc
     else:
       extracted_docs = common.ExtractedDocs(
           doc="", attr_doc={}, example_doc="", implicit_target_doc={})
@@ -94,7 +95,7 @@ class MacroDocExtractor(object):
         attr.mandatory = False
         attr.type = get_type(stmt.args.defaults[i - shift])
 
-    for target_name, desc = extracted_docs.implicit_target_doc.iteritems():
+    for target_name, desc in extracted_docs.implicit_target_doc.iteritems():
       target = rule.implicit_output_target.add()
       target.name = target_name
       target.documentation = desc

@@ -67,7 +67,7 @@ def _parse_attribute_docs(attr_doc, lines, index):
       break
     # In practice, users sometimes add a "-" prefix, so we strip it even
     # though it is not recommended by the style guide
-    match = re.search(r"^\s*-?\s*(\w+):\s*(.*)", line)
+    match = re.search(r"^\s*-?\s*([`\*\.\w]+):\s*(.*)", line)
     if match:  # We have found a new attribute
       if attr:
         attr_doc[attr] = escape(desc)

@@ -287,8 +287,8 @@ class MacroExtractorTest(unittest.TestCase):
           \"\"\"Macro with implicit output targets.
 
           Implicit Output Targets:
-            `foo`.jar: A Java archive.
-            `foo`_deploy.jar: A Java archive suitable for deployment.
+            **foo**.jar: A Java archive.
+            **foo**_deploy.jar: A Java archive suitable for deployment.
 
                 Only built if explicitly requested.
 
@@ -307,8 +307,8 @@ class MacroExtractorTest(unittest.TestCase):
 
     expected = textwrap.dedent("""\
         rule {
-          name: "macro_with_example"
-          documentation: "Macro with examples."
+          name: "macro_with_implicit_output"
+          documentation: "Macro with implicit output targets."
           attribute {
             name: "name"
             type: UNKNOWN
@@ -328,11 +328,11 @@ class MacroExtractorTest(unittest.TestCase):
             documentation: "The visibility of this rule."
           }
           implicit_output_target {
-            name: "`foo`.jar"
+            name: "**foo**.jar"
             documentation: "A Java archive."
           }
           implicit_output_target {
-            name: "`foo`_deploy.jar"
+            name: "**foo**_deploy.jar"
             documentation: "A Java archive suitable for deployment.\\n\\nOnly built if explicitly requested."
           }
         }

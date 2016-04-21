@@ -22,10 +22,11 @@ class CommonTest(unittest.TestCase):
 
   def test_rule_doc_only(self):
     docstring = 'Rule documentation only docstring.'
-    doc, attr_doc, example_doc = common.parse_docstring(docstring)
-    self.assertEqual('Rule documentation only docstring.', doc)
-    self.assertDictEqual({}, attr_doc)
-    self.assertEqual('', example_doc)
+    extracted_docs = common.parse_docstring(docstring)
+    self.assertEqual('Rule documentation only docstring.', extracted_docs.doc)
+    self.assertDictEqual({}, extracted_docs.attr_doc)
+    self.assertEqual('', extracted_docs.example_doc)
+    self.assertDictEqual({}, extracted_docs.implicit_target_doc)
 
   def test_rule_and_attribute_doc(self):
     docstring = (
@@ -160,18 +161,18 @@ class CommonTest(unittest.TestCase):
         '  visibility: The visibility of this rule.\n'
         '\n'
         'Implicit Output Targets:\n'
-        '  `name`.jar: A Java archive.\n'
-        '  `name`_deploy.jar: A Java archive suitable for deployment.\n'
+        '  **name**.jar: A Java archive.\n'
+        '  **name**_deploy.jar: A Java archive suitable for deployment.\n'
         '\n'
         '      Only built if explicitly requested.\n')
     expected_attrs = {
         'name': 'A unique name for this rule.',
         'visibility': 'The visibility of this rule.'
     }
-    expected_attrs = {
-        '`name`.jar': 'A Java archive.',
-        '`name`_deploy.jar': ('A Java archive suitable for deployment.\n\n'
-                              'Only built if explicitly requested.\n'),
+    expected_implicit_targets = {
+        '**name**.jar': 'A Java archive.',
+        '**name**_deploy.jar': ('A Java archive suitable for deployment.\n\n'
+                                'Only built if explicitly requested.'),
     }
 
     extracted_docs = common.parse_docstring(docstring)

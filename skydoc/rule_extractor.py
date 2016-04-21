@@ -130,8 +130,10 @@ class RuleDocExtractor(object):
     for rule_desc in rules:
       rule = self.__language.rule.add()
       rule.name = rule_desc.name
-      rule.documentation = rule_desc.doc
-      rule.example_documentation = rule_desc.example_doc
+      if rule_desc.doc:
+        rule.documentation = rule_desc.doc
+      if rule_desc.example_doc:
+        rule.example_documentation = rule_desc.example_doc
 
       attrs = sorted(rule_desc.attrs.values(), cmp=attr.attr_compare)
       for attr_desc in attrs:
@@ -139,14 +141,15 @@ class RuleDocExtractor(object):
           continue
         attr_proto = rule.attribute.add()
         attr_proto.name = attr_desc.name
-        attr_proto.documentation = attr_desc.doc
+        if attr_desc.doc:
+          attr_proto.documentation = attr_desc.doc
         attr_proto.type = attr_desc.type
         attr_proto.mandatory = attr_desc.mandatory
         # TODO(dzc): Save the default value of the attribute. This will require
         # adding a proto field to the AttributeDefinition proto, perhaps as a
         # oneof.
 
-      for target_name, desc = rule_desc.implicit_output_targets:
+      for target_name, desc in rule_desc.implicit_output_targets.iteritems():
         target = rule.implicit_output_target.add()
         target.name = target_name
         target.documentation = desc
