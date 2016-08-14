@@ -14,6 +14,7 @@
 
 """Common functions for skydoc."""
 
+import os
 import re
 import textwrap
 from xml.sax.saxutils import escape
@@ -23,6 +24,90 @@ ARGS_HEADING = "Args:"
 EXAMPLES_HEADING = "Examples:"
 EXAMPLE_HEADING = "Example:"
 OUTPUTS_HEADING = "Outputs:"
+
+
+class InputError(Exception):
+  """Exception raised for errors in the input to Skydoc."""
+  def __init__(self, message):
+    self.message = message
+
+
+def read_renames(rename_file):
+  """Parses the file containing the mapping from source to output file name.
+
+  Args:
+    rename_file: The path to the file containing the rename map.
+
+  Returns:
+    A dictionary keyed by source file to output file name.
+  """
+  renames = {}
+  if not rename_file:
+    return renames
+  with open(rename_file) as f:
+    lines = f.readlines()
+    n = 1
+    for line in lines:
+      parts = line.split("\t")
+      if len(parts) != 2:
+        raise InputError(
+            "%s:%d: Invalid file mapping format for renames file:\n\n%s\n"
+            % (rename_file, n, line))
+      src = parts[0].strip()
+      dest = parts[1].strip()
+      if src == '' or dest == '':
+        raise InputError(
+            "%s:%d: Invalid file mapping format for renames file:\n\n%s\n"
+            % (rename_file, n, line))
+      renames[src] = dest
+      n += 1
+  return renames
+
+
+def replace_extension(file_path, new_ext):
+  """Replaces the file extension in the given file path.
+
+  Args:
+    file_name: The file name.
+    new_ext: The replacement file extension.
+
+  Returns:
+    The file path with the file extension replaced with the new file
+    extension. If the path has no file extension, then no replacement is made.
+  """
+  head, sep, tail = file_path.rpartition('.')
+  if not sep:
+    return file_path
+  else:
+    return head + sep + new_ext
+
+
+def validate_renames(renames, bzl_files, format):
+  """Validates the rename map against the input files and output format.
+
+  Args:
+    renames: Dictionary keyed by source file to output file name, which
+      specifies overrides how the output documentation files should be named.
+    bzl_files: List of paths to input `.bzl` files.
+    format: The output format, which determines the file extension for the
+      output files. Possible values are 'html' and 'markdown', which use
+      the `.html` and `.md` file extensions respectively.
+  """
+  if format != 'html' and format != 'markdown':
+    raise InputError('Invalid output format %s. Possible formats are "html"' +
+                     ' and "markdown".')
+  file_extension = 'html' if format == 'html' else 'md'
+  output_files = set()
+  for bzl_file in bzl_files:
+    if bzl_file in renames:
+      output_file = renames[bzl_file]
+    else:
+      output_file = replace_extension(os.path.basename(bzl_file),
+                                      file_extension)
+    if output_file in output_files:
+      raise InputError('Conflicting output file %s for input file %s'
+                       % (output_file, bzl_file))
+    output_files.add(output_file)
 
 
 class ExtractedDocs(object):

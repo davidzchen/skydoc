@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import unittest
+import tempfile
 # internal imports
 
 from skydoc import common
@@ -182,6 +183,60 @@ class CommonTest(unittest.TestCase):
     self.assertEqual('', extracted_docs.example_doc)
     self.assertDictEqual(expected_outputs, extracted_docs.output_docs)
 
+  def check_renames(self, contents, expected_renames):
+    with tempfile.NamedTemporaryFile() as tf:
+      tf.write(contents)
+      tf.flush()
+
+      renames = common.read_renames(tf.name)
+      self.assertDictEqual(expected_renames, renames)
+
+  def invalid_renames(self, contents):
+    with tempfile.NamedTemporaryFile() as tf:
+      tf.write(contents)
+      tf.flush()
+
+      self.assertRaises(common.InputError, common.read_renames, tf.name)
+
+  def test_read_renames(self):
+    self.check_renames('', {})
+    self.check_renames(
+        'rules/checkstyle.bzl\tcheckstyle.md\n'
+        'rules/rat.bzl\trat.md\n',
+        {
+            'rules/checkstyle.bzl': 'checkstyle.md',
+            'rules/rat.bzl': 'rat.md',
+        })
+
+    self.invalid_renames('rules/checkstyle.bzl\n')
+    self.invalid_renames('rules/checkstyle.bzl\t\n')
+    self.invalid_renames('\trules/checkstyle.bzl\n')
+
+  def test_replace_extension(self):
+    self.assertEqual('foo.md', common.replace_extension('foo.bzl', 'md'))
+    self.assertEqual('foo.bzl.md',
+                     common.replace_extension('foo.bzl.bzl', 'md'))
+    self.assertEqual('foo', common.replace_extension('foo', 'md'))
+
+  def rename_conflict(self, renames, bzl_files, format):
+    self.assertRaises(common.InputError,
+                      common.validate_renames,
+                      renames,
+                      bzl_files,
+                      format)
+
+  def test_validate_renames(self):
+    common.validate_renames({}, ['foo/foo.bzl', 'bar.bzl'], 'markdown')
+    common.validate_renames({'foo/bar.bzl': 'foo.md'},
+                            ['foo/bar.bzl', 'bar.bzl'], 'markdown')
+    common.validate_renames({'foo/foo.bzl': 'bar.md'},
+                            ['foo/foo.bzl', 'bar.bzl'], 'html')
+
+    self.rename_conflict({}, ['foo/bar.bzl', 'bar.bzl'], 'markdown')
+    self.rename_conflict({'foo/foo.bzl': 'bar.md'},
+                         ['foo/foo.bzl', 'bar.bzl'], 'markdown')
+    self.rename_conflict({'foo/foo.bzl': 'baz.md', 'bar.bzl': 'baz.md'},
+                         ['foo/foo.bzl', 'bar.bzl'], 'markdown')
 
 if __name__ == '__main__':
   unittest.main()

@@ -32,26 +32,56 @@ def _get_transitive_sources(deps):
     transitive_sources += dep.transitive_bzl_files
   return transitive_sources
 
+def _get_renames(ctx):
+  renames = {}
+  for dep in ctx.attr.deps:
+    renames.update(dep.transitive_renames)
+
+  for (key, value) in ctx.attr.rename.items():
+    resolved_key = "%s/%s" % (ctx.label.package, key)
+    renames[resolved_key] = value
+  return renames
+
 def _skylark_library_impl(ctx):
   """Implementation of the skylark_library rule."""
   sources = _get_transitive_sources(ctx.attr.deps) + ctx.files.srcs
+  renames = _get_renames(ctx)
   return struct(files = set(),
-                transitive_bzl_files = sources)
+                transitive_bzl_files = sources,
+                transitive_renames = renames)
 
 def _skydoc(ctx):
   for f in ctx.files.skydoc:
     if not f.path.endswith(".py"):
       return f
 
+def _serialize_renames(renames):
+  contents = ""
+  for (key, value) in renames.items():
+    contents += "%s\t%s\n" % (key, value)
+  return contents
+
 def _skylark_doc_impl(ctx):
   """Implementation of the skylark_doc rule."""
+  # Write renames file.
+  renames = _get_renames(ctx)
+  renames_file = None
+  if len(renames) > 0:
+    renames_file = ctx.new_file(ctx.label.name + ".renames")
+    ctx.file_action(renames_file, _serialize_renames(renames))
+
+  # Generate documentation archive.
   skylark_doc_zip = ctx.outputs.skylark_doc_zip
   inputs = _get_transitive_sources(ctx.attr.deps) + ctx.files.srcs
   sources = [source.path for source in inputs]
   args = [
       "--format=%s" % ctx.attr.format,
       "--output_file=%s" % ctx.outputs.skylark_doc_zip.path,
-  ] + sources
+  ]
+  if renames_file and len(renames) > 0:
+    args += ["--rename=%s" % renames_file.path]
+    inputs += [renames_file]
+  args += sources
   skydoc = _skydoc(ctx)
   ctx.action(
       inputs = list(inputs) + [skydoc],
@@ -65,8 +95,10 @@ def _skylark_doc_impl(ctx):
 
 _skylark_common_attrs = {
     "srcs": attr.label_list(allow_files = _SKYLARK_FILETYPE),
-    "deps": attr.label_list(providers = ["transitive_bzl_files"],
-                            allow_files = False),
+    "deps": attr.label_list(
+        providers = ["transitive_bzl_files", "transitive_renames"],
+        allow_files = False),
+    "rename": attr.string_dict(),
 }
 
 skylark_library = rule(
@@ -79,12 +111,15 @@ Args:
   srcs: List of `.bzl` files that are processed to create this target.
   deps: List of other `skylark_library` targets that are required by the Skylark
     files listed in `srcs`.
+  rename: Dictionary of files to rename. The key is the label of the .bzl file
+    relative to the package this rule is in, and the value is the desired output
+    filename.
 
 Example:
   If you would like to generate documentation for multiple .bzl files in various
   packages in your workspace, you can use the `skylark_library` rule to create
-  logical collections of Skylark sources and add a single `skylark_doc` target for
-  building documentation for all of the rule sets.
+  logical collections of Skylark sources and add a single `skylark_doc` target
+  for building documentation for all of the rule sets.
 
   Suppose your project has the following structure:
 
@@ -170,6 +205,9 @@ Args:
   srcs: List of `.bzl` files that are processed to create this target.
   deps: List of other `skylark_library` targets that are required by the Skylark
     files listed in `srcs`.
+  rename: Dictionary of files to rename. The key is the label of the .bzl file
+    relative to the package this rule is in, and the value is the desired output
+    filename.
   format: The type of output to generate. Possible values are `"markdown"` and
     `"html"`.
 

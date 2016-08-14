@@ -25,6 +25,7 @@ import sys
 import tempfile
 import zipfile
 
+from skydoc import common
 from skydoc import macro_extractor
 from skydoc import rule
 from skydoc import rule_extractor
@@ -36,6 +37,9 @@ gflags.DEFINE_string('output_file', '',
     'The output zip archive file to write if --zip=true.')
 gflags.DEFINE_string('format', 'markdown',
     'The output format. Possible values are markdown and html')
+gflags.DEFINE_string('rename', '',
+    'File containing a mapping from source file to output file name to '
+    'specify files to rename.')
 gflags.DEFINE_bool('zip', True,
     'Whether to generate a ZIP arhive containing the output files. If '
     '--zip is true, then skydoc will generate a zip file, skydoc.zip by '
@@ -110,10 +114,11 @@ def merge_languages(macro_language, rule_language):
 class MarkdownWriter(object):
   """Writer for generating documentation in Markdown."""
 
-  def __init__(self, output_dir, output_file, output_zip):
+  def __init__(self, output_dir, output_file, output_zip, renames):
     self.__output_dir = output_dir
     self.__output_file = output_file
     self.__output_zip = output_zip
+    self.__renames = renames
 
   def write(self, rulesets):
     """Write the documentation for the rules contained in rulesets."""
@@ -149,8 +154,14 @@ class MarkdownWriter(object):
     template = env.get_template('markdown.jinja')
     out = template.render(ruleset=ruleset)
 
+    # Get basename of output file from renames map if specified or generate from
+    # input file name.
+    output_filename = (self.__renames[ruleset.file_name]
+        if ruleset.file_name in self.__renames else
+        "%s.md" % ruleset.name)
+
     # Write output to file.
-    output_file = "%s/%s.md" % (output_dir, ruleset.name)
+    output_file = "%s/%s" % (output_dir, output_filename)
     with open(output_file, "w") as f:
       f.write(out)
     return output_file
@@ -158,10 +169,11 @@ class MarkdownWriter(object):
 class HtmlWriter(object):
   """Writer for generating documentation in HTML."""
 
-  def __init__(self, output_dir, output_file, output_zip):
+  def __init__(self, output_dir, output_file, output_zip, renames):
     self.__output_dir = output_dir
     self.__output_file = output_file
     self.__output_zip = output_zip
+    self.__renames = renames
     self.__env = _create_jinja_environment()
 
   def write(self, rulesets):
@@ -202,11 +214,16 @@ class HtmlWriter(object):
     template = self.__env.get_template('html.jinja')
     out = template.render(ruleset=ruleset, nav=nav)
 
+    output_filename = (self.__renames[ruleset.file_name]
+        if ruleset.file_name in self.__renames else
+        "%s.html" % ruleset.name)
+
     # Write output to file.
-    output_file = "%s/%s.html" % (output_dir, ruleset.name)
+    output_file = "%s/%s" % (output_dir, output_filename)
     with open(output_file, "w") as f:
       f.write(out)
     return output_file
+
 
 def main(argv):
   if FLAGS.output_dir and FLAGS.output_file:
@@ -218,25 +235,33 @@ def main(argv):
   if not FLAGS.output_file:
     FLAGS.output_file = DEFAULT_OUTPUT_FILE
 
+  bzl_files = argv[1:]
+  try:
+    renames = common.read_renames(FLAGS.rename)
+    common.validate_renames(renames, bzl_files, FLAGS.format)
+  except common.InputError as err:
+    print(err.message)
+    sys.exit(1)
+
   rulesets = []
-  for bzl_file in argv[1:]:
+  for bzl_file in bzl_files:
     macro_doc_extractor = macro_extractor.MacroDocExtractor()
     rule_doc_extractor = rule_extractor.RuleDocExtractor()
     macro_doc_extractor.parse_bzl(bzl_file)
     rule_doc_extractor.parse_bzl(bzl_file)
     merged_language = merge_languages(macro_doc_extractor.proto(),
                                       rule_doc_extractor.proto())
-    file_basename = os.path.basename(bzl_file)
-    rulesets.append(rule.RuleSet(file_basename, merged_language,
+    rulesets.append(rule.RuleSet(bzl_file, merged_language,
                                  macro_doc_extractor.title,
                                  macro_doc_extractor.description))
 
   if FLAGS.format == "markdown":
     markdown_writer = MarkdownWriter(FLAGS.output_dir, FLAGS.output_file,
-                                     FLAGS.zip)
+                                     FLAGS.zip, renames)
     markdown_writer.write(rulesets)
   elif FLAGS.format == "html":
-    html_writer = HtmlWriter(FLAGS.output_dir, FLAGS.output_file, FLAGS.zip)
+    html_writer = HtmlWriter(FLAGS.output_dir, FLAGS.output_file, FLAGS.zip,
+                             renames)
     html_writer.write(rulesets)
   else:
     sys.stderr.write(

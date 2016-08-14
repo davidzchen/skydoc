@@ -16,6 +16,7 @@
 
 
 # internal imports
+import os
 from skydoc import build_pb2
 
 
@@ -127,7 +128,8 @@ class RuleSet(object):
 
   def __init__(self, file_name, language, title, description):
     self.file_name = file_name
-    self.name = file_name.replace('.bzl', '')
+    file_basename = os.path.basename(file_name)
+    self.name = file_basename.replace('.bzl', '')
     self.language = language
     self.title = title if title else "%s Rules" % self.name
     self.description = description
